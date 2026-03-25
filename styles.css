@@ -39,15 +39,23 @@
 }
 
 #feedback .bar-label {
-    position: absolute;
-    left: 8px;
-    top: 1px;
+    position: relative;
+    display: inline-block;
+    margin-right: 8px;
     font-size: 10px;
+    font-weight: bold;
     color: black;
 }
 
 #noteBar, #quarterBar, #halfBar {
     width: 100%;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    padding-left: 8px;
+    box-sizing: border-box;
+    overflow: visible;
     height: 22px;
     margin-top: 2px;
     border: 1px solid #000;

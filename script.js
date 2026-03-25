@@ -220,8 +220,9 @@ function updateFeedback(type, diff, diffSpan, bar, forceMiss = false) {
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
     const absSec = (Math.abs(diff) / 1000).toFixed(3);
     const miss = forceMiss || Math.abs(diff) > hitBound;
+    const diffMs = `${Math.round(diff)}ms`;
 
-    diffSpan.textContent = `${diff}ms (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
+    diffSpan.textContent = `${diffMs} (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
 
     if (miss) {
         bar.style.backgroundColor = 'red';
@@ -257,9 +258,6 @@ document.addEventListener('keydown', (e) => {
             updateFeedback('half', halfDiffVal, halfDiff, halfBar);
             halfAwaiting = false;
         }
-
-        // Accepted accuracy is handled by the awaiting state above, no extra offsets needed.
-        // This avoids duplicate updateFeedback calls and stale readouts.
     }
 });
 

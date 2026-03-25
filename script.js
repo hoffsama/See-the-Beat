@@ -258,31 +258,8 @@ document.addEventListener('keydown', (e) => {
             halfAwaiting = false;
         }
 
-        // Optional: preserve existing behavior for remainder of cycle
-        // (the previous implementation used showNote/showNoteDisplay, which were removed)
-        // This block is intentionally no-op to avoid null references.
-
-        if (showQuarter.checked) {
-            const currentMod4 = currentIndex % 4;
-            const offsetToNextQuarter = (4 - currentMod4) % 4;
-            const nextQuarterTime = lastNoteTime + offsetToNextQuarter * interval;
-            const prevQuarterTime = lastNoteTime + (offsetToNextQuarter - 4) * interval;
-            const diffNextQ = Math.abs(now - nextQuarterTime);
-            const diffPrevQ = Math.abs(now - prevQuarterTime);
-            const quarterDiffVal = diffNextQ < diffPrevQ ? now - nextQuarterTime : now - prevQuarterTime;
-            updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
-        }
-
-        if (showHalf.checked) {
-            const currentMod8 = currentIndex % 8;
-            const offsetToNextHalf = (8 - currentMod8) % 8;
-            const nextHalfTime = lastNoteTime + offsetToNextHalf * interval;
-            const prevHalfTime = lastNoteTime + (offsetToNextHalf - 8) * interval;
-            const diffNextH = Math.abs(now - nextHalfTime);
-            const diffPrevH = Math.abs(now - prevHalfTime);
-            const halfDiffVal = diffNextH < diffPrevH ? now - nextHalfTime : now - prevHalfTime;
-            updateFeedback('half', halfDiffVal, halfDiff, halfBar);
-        }
+        // Accepted accuracy is handled by the awaiting state above, no extra offsets needed.
+        // This avoids duplicate updateFeedback calls and stale readouts.
     }
 });
 

@@ -26,7 +26,7 @@ function updateBPM() {
 
 function activateNext() {
     circles.forEach(circle => {
-        circle.style.backgroundColor = 'gray';
+        circle.style.backgroundColor = '#333';
         circle.classList.remove('beat');
     });
     const section = Math.floor(currentIndex / 4);
@@ -45,7 +45,7 @@ toggleButton.addEventListener('click', () => {
     } else {
         clearInterval(intervalId);
         toggleButton.textContent = 'Start';
-        circles.forEach(circle => circle.style.backgroundColor = 'gray');
+        circles.forEach(circle => circle.style.backgroundColor = '#333');
         currentIndex = 0;
     }
 });

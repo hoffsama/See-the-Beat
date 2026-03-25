@@ -143,7 +143,7 @@ function activateNext() {
     // If previous note was never pressed, mark miss; otherwise clear previous state
     if (noteAwaiting) {
         const missDiff = now - noteTriggerTime;
-        updateFeedback('note', missDiff, noteDiff, noteBar);
+        updateFeedback('note', missDiff, noteDiff, noteBar, true);
     } else {
         clearFeedback(noteDiff, noteBar);
     }
@@ -152,7 +152,7 @@ function activateNext() {
     if (currentIndex % 4 === 0 || currentIndex === 0) {
         if (quarterAwaiting) {
             const missDiff = now - quarterTriggerTime;
-            updateFeedback('quarter', missDiff, quarterDiff, quarterBar);
+            updateFeedback('quarter', missDiff, quarterDiff, quarterBar, true);
         } else {
             clearFeedback(quarterDiff, quarterBar);
         }
@@ -162,7 +162,7 @@ function activateNext() {
     if (currentIndex % 8 === 0 || currentIndex === 0) {
         if (halfAwaiting) {
             const missDiff = now - halfTriggerTime;
-            updateFeedback('half', missDiff, halfDiff, halfBar);
+            updateFeedback('half', missDiff, halfDiff, halfBar, true);
         } else {
             clearFeedback(halfDiff, halfBar);
         }
@@ -205,25 +205,25 @@ function clearFeedback(diffSpan, bar) {
     bar.style.backgroundColor = 'gray';
 }
 
-function updateFeedback(type, diff, diffSpan, bar) {
+function updateFeedback(type, diff, diffSpan, bar, forceMiss = false) {
     const hitBound = parseInt(errorBound.value);
     const colorBoundVal = parseInt(colorBound.value);
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
     const absSec = (Math.abs(diff) / 1000).toFixed(3);
-    const miss = Math.abs(diff) > hitBound;
+    const miss = forceMiss || Math.abs(diff) > hitBound;
 
     diffSpan.textContent = `${diff}ms (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
 
     if (miss) {
         bar.style.backgroundColor = 'red';
-        recordStat(type, diff, miss);
+        recordStat(type, diff, true);
         return;
     }
 
     const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
     const hue = 120 * (1 - normalized); // 0=green, 120=red as diff increases
     bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-    recordStat(type, diff, miss);
+    recordStat(type, diff, false);
 }
 
 document.addEventListener('keydown', (e) => {

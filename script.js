@@ -17,6 +17,38 @@ const halfDiff = document.getElementById('halfDiff');
 const noteBar = document.getElementById('noteBar');
 const quarterBar = document.getElementById('quarterBar');
 const halfBar = document.getElementById('halfBar');
+const showNote = document.getElementById('showNote');
+const noteDisplay = document.getElementById('noteDisplay');
+const showQuarter = document.getElementById('showQuarter');
+const quarterDisplay = document.getElementById('quarterDisplay');
+const showHalf = document.getElementById('showHalf');
+const halfDisplay = document.getElementById('halfDisplay');
+
+function updateDisplays() {
+    const noteFeedback = document.getElementById('noteFeedback');
+    const noteSpan = document.getElementById('noteDiff');
+    const noteBar = document.getElementById('noteBar');
+    noteFeedback.style.display = showNote.checked ? 'block' : 'none';
+    const nMode = noteDisplay.value;
+    noteSpan.style.display = (nMode === 'ms' || nMode === 'both') ? 'inline' : 'none';
+    noteBar.style.display = (nMode === 'color' || nMode === 'both') ? 'block' : 'none';
+
+    const quarterFeedback = document.getElementById('quarterFeedback');
+    const quarterSpan = document.getElementById('quarterDiff');
+    const quarterBar = document.getElementById('quarterBar');
+    quarterFeedback.style.display = showQuarter.checked ? 'block' : 'none';
+    const qMode = quarterDisplay.value;
+    quarterSpan.style.display = (qMode === 'ms' || qMode === 'both') ? 'inline' : 'none';
+    quarterBar.style.display = (qMode === 'color' || qMode === 'both') ? 'block' : 'none';
+
+    const halfFeedback = document.getElementById('halfFeedback');
+    const halfSpan = document.getElementById('halfDiff');
+    const halfBar = document.getElementById('halfBar');
+    halfFeedback.style.display = showHalf.checked ? 'block' : 'none';
+    const hMode = halfDisplay.value;
+    halfSpan.style.display = (hMode === 'ms' || hMode === 'both') ? 'inline' : 'none';
+    halfBar.style.display = (hMode === 'color' || hMode === 'both') ? 'block' : 'none';
+}
 
 const myColor1 = '#ffadae';
 const myColor2 = '#ffd7a6';
@@ -62,7 +94,9 @@ function activateNext() {
 
 function updateFeedback(diff, diffSpan, bar) {
     const bound = parseInt(errorBound.value);
-    diffSpan.textContent = diff;
+    const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
+    const absSec = (Math.abs(diff) / 1000).toFixed(3);
+    diffSpan.textContent = `${diff}ms (${absSec}s ${sign})`;
     if (Math.abs(diff) > bound) {
         bar.style.backgroundColor = 'red';
     } else {
@@ -81,30 +115,36 @@ document.addEventListener('keydown', (e) => {
         const diff = now - lastNoteTime;
 
         // Note (16th)
-        const noteOffset = Math.round(diff / interval);
-        const closestNoteTime = lastNoteTime + noteOffset * interval;
-        const noteDiff = now - closestNoteTime;
-        updateFeedback(noteDiff, noteDiff, noteBar);
+        if (showNote.checked) {
+            const noteOffset = Math.round(diff / interval);
+            const closestNoteTime = lastNoteTime + noteOffset * interval;
+            const noteDiffVal = now - closestNoteTime;
+            updateFeedback(noteDiffVal, noteDiff, noteBar);
+        }
 
         // Quarter
-        const currentMod4 = currentIndex % 4;
-        const offsetToNextQuarter = (4 - currentMod4) % 4;
-        const nextQuarterTime = lastNoteTime + offsetToNextQuarter * interval;
-        const prevQuarterTime = lastNoteTime + (offsetToNextQuarter - 4) * interval;
-        const diffNextQ = Math.abs(now - nextQuarterTime);
-        const diffPrevQ = Math.abs(now - prevQuarterTime);
-        const quarterDiff = diffNextQ < diffPrevQ ? now - nextQuarterTime : now - prevQuarterTime;
-        updateFeedback(quarterDiff, quarterDiff, quarterBar);
+        if (showQuarter.checked) {
+            const currentMod4 = currentIndex % 4;
+            const offsetToNextQuarter = (4 - currentMod4) % 4;
+            const nextQuarterTime = lastNoteTime + offsetToNextQuarter * interval;
+            const prevQuarterTime = lastNoteTime + (offsetToNextQuarter - 4) * interval;
+            const diffNextQ = Math.abs(now - nextQuarterTime);
+            const diffPrevQ = Math.abs(now - prevQuarterTime);
+            const quarterDiffVal = diffNextQ < diffPrevQ ? now - nextQuarterTime : now - prevQuarterTime;
+            updateFeedback(quarterDiffVal, quarterDiff, quarterBar);
+        }
 
         // Half
-        const currentMod8 = currentIndex % 8;
-        const offsetToNextHalf = (8 - currentMod8) % 8;
-        const nextHalfTime = lastNoteTime + offsetToNextHalf * interval;
-        const prevHalfTime = lastNoteTime + (offsetToNextHalf - 8) * interval;
-        const diffNextH = Math.abs(now - nextHalfTime);
-        const diffPrevH = Math.abs(now - prevHalfTime);
-        const halfDiff = diffNextH < diffPrevH ? now - nextHalfTime : now - prevHalfTime;
-        updateFeedback(halfDiff, halfDiff, halfBar);
+        if (showHalf.checked) {
+            const currentMod8 = currentIndex % 8;
+            const offsetToNextHalf = (8 - currentMod8) % 8;
+            const nextHalfTime = lastNoteTime + offsetToNextHalf * interval;
+            const prevHalfTime = lastNoteTime + (offsetToNextHalf - 8) * interval;
+            const diffNextH = Math.abs(now - nextHalfTime);
+            const diffPrevH = Math.abs(now - prevHalfTime);
+            const halfDiffVal = diffNextH < diffPrevH ? now - nextHalfTime : now - prevHalfTime;
+            updateFeedback(halfDiffVal, halfDiff, halfBar);
+        }
     }
 });
 
@@ -123,3 +163,12 @@ toggleButton.addEventListener('click', () => {
 
 bpmSlider.addEventListener('input', updateBPM);
 errorBound.addEventListener('input', updateError);
+showNote.addEventListener('change', updateDisplays);
+noteDisplay.addEventListener('change', updateDisplays);
+showQuarter.addEventListener('change', updateDisplays);
+quarterDisplay.addEventListener('change', updateDisplays);
+showHalf.addEventListener('change', updateDisplays);
+halfDisplay.addEventListener('change', updateDisplays);
+
+// Initialize displays
+updateDisplays();

@@ -24,6 +24,11 @@
         <div class="circle" id="circle14"></div>
         <div class="circle" id="circle15"></div>
         <div class="circle" id="circle16"></div>
+        <div id="feedback">
+            <div id="noteFeedback">Note: <span id="noteDiff">--</span> <div id="noteBar"></div></div>
+            <div id="quarterFeedback">Quarter: <span id="quarterDiff">--</span> <div id="quarterBar"></div></div>
+            <div id="halfFeedback">Half: <span id="halfDiff">--</span> <div id="halfBar"></div></div>
+        </div>
     </div>
     <button id="toggleButton">Start</button>
     <div>
@@ -33,10 +38,35 @@
         <label for="errorBound">Error Bound (ms): <span id="errorValue">100</span></label>
         <input type="range" id="errorBound" min="10" max="500" value="100">
     </div>
-    <div id="feedback">
-        <div id="noteFeedback">Note: <span id="noteDiff">--</span>ms <div id="noteBar"></div></div>
-        <div id="quarterFeedback">Quarter: <span id="quarterDiff">--</span>ms <div id="quarterBar"></div></div>
-        <div id="halfFeedback">Half: <span id="halfDiff">--</span>ms <div id="halfBar"></div></div>
-    </div>    <script src="script.js"></script>
+    <div id="controls">
+        <div class="control-group">
+            <label><input type="checkbox" id="showNote" checked> Show Note</label>
+            <select id="noteDisplay">
+                <option value="both">Both</option>
+                <option value="ms">MS only</option>
+                <option value="color">Color only</option>
+                <option value="none">None</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label><input type="checkbox" id="showQuarter" checked> Show Quarter</label>
+            <select id="quarterDisplay">
+                <option value="both">Both</option>
+                <option value="ms">MS only</option>
+                <option value="color">Color only</option>
+                <option value="none">None</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label><input type="checkbox" id="showHalf" checked> Show Half</label>
+            <select id="halfDisplay">
+                <option value="both">Both</option>
+                <option value="ms">MS only</option>
+                <option value="color">Color only</option>
+                <option value="none">None</option>
+            </select>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>

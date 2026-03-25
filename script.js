@@ -4,6 +4,12 @@ let intervalId;
 let lastNoteTime = 0;
 let lastQuarterTime = 0;
 let lastHalfTime = 0;
+let noteAwaiting = false;
+let quarterAwaiting = false;
+let halfAwaiting = false;
+let noteTriggerTime = 0;
+let quarterTriggerTime = 0;
+let halfTriggerTime = 0;
 
 const circles = document.querySelectorAll('.circle');
 const toggleButton = document.getElementById('toggleButton');
@@ -73,6 +79,36 @@ function updateError() {
 
 function activateNext() {
     const now = Date.now();
+
+    // If previous note was never pressed, mark miss
+    if (noteAwaiting) {
+        const missDiff = now - noteTriggerTime;
+        updateFeedback(missDiff, noteDiff, noteBar);
+        noteAwaiting = false;
+    }
+    if (quarterAwaiting && (currentIndex % 4 === 0 || currentIndex === 0)) {
+        const missDiff = now - quarterTriggerTime;
+        updateFeedback(missDiff, quarterDiff, quarterBar);
+        quarterAwaiting = false;
+    }
+    if (halfAwaiting && (currentIndex % 8 === 0 || currentIndex === 0)) {
+        const missDiff = now - halfTriggerTime;
+        updateFeedback(missDiff, halfDiff, halfBar);
+        halfAwaiting = false;
+    }
+
+    // Start current note cycle
+    noteAwaiting = true;
+    noteTriggerTime = now;
+    if (currentIndex % 4 === 0) {
+        quarterAwaiting = true;
+        quarterTriggerTime = now;
+    }
+    if (currentIndex % 8 === 0) {
+        halfAwaiting = true;
+        halfTriggerTime = now;
+    }
+
     lastNoteTime = now;
     if (currentIndex % 4 === 0) {
         lastQuarterTime = now;
@@ -80,6 +116,7 @@ function activateNext() {
     if (currentIndex % 8 === 0) {
         lastHalfTime = now;
     }
+
     circles.forEach(circle => {
         circle.style.backgroundColor = '#333';
         circle.classList.remove('beat');
@@ -113,9 +150,25 @@ document.addEventListener('keydown', (e) => {
         const now = Date.now();
         const bpm = parseInt(bpmSlider.value);
         const interval = 60000 / bpm / 4;
-        const diff = now - lastNoteTime;
 
-        // Note (16th)
+        if (showNote.checked && noteAwaiting) {
+            const noteDiffVal = now - noteTriggerTime;
+            updateFeedback(noteDiffVal, noteDiff, noteBar);
+            noteAwaiting = false;
+        }
+        if (showQuarter.checked && quarterAwaiting) {
+            const quarterDiffVal = now - quarterTriggerTime;
+            updateFeedback(quarterDiffVal, quarterDiff, quarterBar);
+            quarterAwaiting = false;
+        }
+        if (showHalf.checked && halfAwaiting) {
+            const halfDiffVal = now - halfTriggerTime;
+            updateFeedback(halfDiffVal, halfDiff, halfBar);
+            halfAwaiting = false;
+        }
+
+        // Optional: preserve existing behavior for remainder of cycle
+        const diff = now - lastNoteTime;
         if (showNote.checked) {
             const noteOffset = Math.round(diff / interval);
             const closestNoteTime = lastNoteTime + noteOffset * interval;
@@ -123,7 +176,6 @@ document.addEventListener('keydown', (e) => {
             updateFeedback(noteDiffVal, noteDiff, noteBar);
         }
 
-        // Quarter
         if (showQuarter.checked) {
             const currentMod4 = currentIndex % 4;
             const offsetToNextQuarter = (4 - currentMod4) % 4;
@@ -135,7 +187,6 @@ document.addEventListener('keydown', (e) => {
             updateFeedback(quarterDiffVal, quarterDiff, quarterBar);
         }
 
-        // Half
         if (showHalf.checked) {
             const currentMod8 = currentIndex % 8;
             const offsetToNextHalf = (8 - currentMod8) % 8;

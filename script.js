@@ -29,7 +29,7 @@ class AudioEngine {
         this.sounds = {
             whole: this.createTone(220, 'sine', 0.3),      // Low A (220Hz)
             quarter: this.createTone(330, 'square', 0.2),   // High E (330Hz)
-            half: this.createTone(440, 'triangle', 0.25)    // A above middle C (440Hz)
+            half: this.createTone(640, 'triangle', 0.25)    // A above middle C (440Hz)
         };
     }
 

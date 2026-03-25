@@ -88,6 +88,10 @@ function updateError() {
     errorValue.textContent = errorBound.value;
 }
 
+function updateColorBound() {
+    colorValue.textContent = colorBound.value;
+}
+
 function recordStat(type, diff, miss) {
     if (!trackingActive) return;
     const entry = {diff, miss, time: Date.now()};
@@ -255,13 +259,8 @@ document.addEventListener('keydown', (e) => {
         }
 
         // Optional: preserve existing behavior for remainder of cycle
-        const diff = now - lastNoteTime;
-        if (showNote.checked) {
-            const noteOffset = Math.round(diff / interval);
-            const closestNoteTime = lastNoteTime + noteOffset * interval;
-            const wholeDiffVal = now - closestNoteTime;
-            updateFeedback('whole', wholeDiffVal, wholeDiff, wholeBar);
-        }
+        // (the previous implementation used showNote/showNoteDisplay, which were removed)
+        // This block is intentionally no-op to avoid null references.
 
         if (showQuarter.checked) {
             const currentMod4 = currentIndex % 4;
@@ -304,8 +303,6 @@ bpmSlider.addEventListener('input', updateBPM);
 errorBound.addEventListener('input', updateError);
 colorBound.addEventListener('input', updateColorBound);
 statsButton.addEventListener('click', showStats);
-showNote.addEventListener('change', updateDisplays);
-noteDisplay.addEventListener('change', updateDisplays);
 showQuarter.addEventListener('change', updateDisplays);
 quarterDisplay.addEventListener('change', updateDisplays);
 showHalf.addEventListener('change', updateDisplays);

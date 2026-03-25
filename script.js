@@ -4,15 +4,15 @@ let intervalId;
 let lastNoteTime = 0;
 let lastQuarterTime = 0;
 let lastHalfTime = 0;
-let noteAwaiting = false;
+let wholeAwaiting = false;
 let quarterAwaiting = false;
 let halfAwaiting = false;
-let noteTriggerTime = 0;
+let wholeTriggerTime = 0;
 let quarterTriggerTime = 0;
 let halfTriggerTime = 0;
 
 let trackingActive = true;
-let notesHistory = [];
+let wholesHistory = [];
 let quartersHistory = [];
 let halvesHistory = [];
 let statsTimerId = null;
@@ -28,27 +28,27 @@ const errorBound = document.getElementById('errorBound');
 const errorValue = document.getElementById('errorValue');
 const colorBound = document.getElementById('colorBound');
 const colorValue = document.getElementById('colorValue');
-const noteDiff = document.getElementById('noteDiff');
+const wholeDiff = document.getElementById('wholeDiff');
 const quarterDiff = document.getElementById('quarterDiff');
 const halfDiff = document.getElementById('halfDiff');
-const noteBar = document.getElementById('noteBar');
+const wholeBar = document.getElementById('wholeBar');
 const quarterBar = document.getElementById('quarterBar');
 const halfBar = document.getElementById('halfBar');
-const showNote = document.getElementById('showNote');
-const noteDisplay = document.getElementById('noteDisplay');
+const showWhole = document.getElementById('showWhole');
+const wholeDisplay = document.getElementById('wholeDisplay');
 const showQuarter = document.getElementById('showQuarter');
 const quarterDisplay = document.getElementById('quarterDisplay');
 const showHalf = document.getElementById('showHalf');
 const halfDisplay = document.getElementById('halfDisplay');
 
 function updateDisplays() {
-    const noteFeedback = document.getElementById('noteFeedback');
-    const noteSpan = document.getElementById('noteDiff');
-    const noteBar = document.getElementById('noteBar');
-    noteFeedback.style.display = showNote.checked ? 'block' : 'none';
-    const nMode = noteDisplay.value;
-    noteSpan.style.display = (nMode === 'ms' || nMode === 'both') ? 'inline' : 'none';
-    noteBar.style.display = (nMode === 'color' || nMode === 'both') ? 'block' : 'none';
+    const wholeFeedback = document.getElementById('wholeFeedback');
+    const wholeSpan = document.getElementById('wholeDiff');
+    const wholeBar = document.getElementById('wholeBar');
+    wholeFeedback.style.display = showWhole.checked ? 'block' : 'none';
+    const nMode = wholeDisplay.value;
+    wholeSpan.style.display = (nMode === 'ms' || nMode === 'both') ? 'inline' : 'none';
+    wholeBar.style.display = (nMode === 'color' || nMode === 'both') ? 'block' : 'none';
 
     const quarterFeedback = document.getElementById('quarterFeedback');
     const quarterSpan = document.getElementById('quarterDiff');
@@ -91,9 +91,9 @@ function updateError() {
 function recordStat(type, diff, miss) {
     if (!trackingActive) return;
     const entry = {diff, miss, time: Date.now()};
-    if (type === 'note') {
-        notesHistory.push(entry);
-        if (notesHistory.length > 100) notesHistory.shift();
+    if (type === 'whole') {
+        wholesHistory.push(entry);
+        if (wholesHistory.length > 100) wholesHistory.shift();
     } else if (type === 'quarter') {
         quartersHistory.push(entry);
         if (quartersHistory.length > 100) quartersHistory.shift();
@@ -112,10 +112,10 @@ function formatStats(history) {
 }
 
 function showStats() {
-    const noteStats = formatStats(notesHistory);
+    const wholeStats = formatStats(wholesHistory);
     const quarterStats = formatStats(quartersHistory);
     const halfStats = formatStats(halvesHistory);
-    statsText.textContent = `Note: ${noteStats}; Quarter: ${quarterStats}; Half: ${halfStats}`;
+    statsText.textContent = `Whole: ${wholeStats}; Quarter: ${quarterStats}; Half: ${halfStats}`;
     trackingActive = false;
     let countdown = 5;
     statsTimer.style.display = 'inline';
@@ -126,7 +126,7 @@ function showStats() {
         if (countdown <= 0) {
             clearInterval(statsTimerId);
             trackingActive = true;
-            notesHistory = [];
+            wholesHistory = [];
             quartersHistory = [];
             halvesHistory = [];
             statsTimer.textContent = 'Tracking';
@@ -150,11 +150,11 @@ function activateNext() {
 
     // Whole note (every 4 steps)
     if (currentIndex % 4 === 0) {
-        if (noteAwaiting) {
-            const missDiff = now - noteTriggerTime;
-            updateFeedback('note', missDiff, noteDiff, noteBar, true);
+        if (wholeAwaiting) {
+            const missDiff = now - wholeTriggerTime;
+            updateFeedback('whole', missDiff, wholeDiff, wholeBar, true);
         } else {
-            clearFeedback(noteDiff, noteBar);
+            clearFeedback(wholeDiff, wholeBar);
         }
     }
 
@@ -168,15 +168,15 @@ function activateNext() {
         }
     }
 
-    // Start current note cycle
+    // Start current whole/quarter/half cycle
     quarterAwaiting = true;
     quarterTriggerTime = now;
 
     if (currentIndex % 4 === 0) {
-        noteAwaiting = true;
-        noteTriggerTime = now;
+        wholeAwaiting = true;
+        wholeTriggerTime = now;
     } else {
-        noteAwaiting = false;
+        wholeAwaiting = false;
     }
 
     if (currentIndex % 8 === 0) {
@@ -243,10 +243,10 @@ document.addEventListener('keydown', (e) => {
             updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
             quarterAwaiting = false;
         }
-        if (showNote.checked && noteAwaiting) {
-            const noteDiffVal = now - noteTriggerTime;
-            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
-            noteAwaiting = false;
+        if (showWhole.checked && wholeAwaiting) {
+            const wholeDiffVal = now - wholeTriggerTime;
+            updateFeedback('whole', wholeDiffVal, wholeDiff, wholeBar);
+            wholeAwaiting = false;
         }
         if (showHalf.checked && halfAwaiting) {
             const halfDiffVal = now - halfTriggerTime;
@@ -259,8 +259,8 @@ document.addEventListener('keydown', (e) => {
         if (showNote.checked) {
             const noteOffset = Math.round(diff / interval);
             const closestNoteTime = lastNoteTime + noteOffset * interval;
-            const noteDiffVal = now - closestNoteTime;
-            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
+            const wholeDiffVal = now - closestNoteTime;
+            updateFeedback('whole', wholeDiffVal, wholeDiff, wholeBar);
         }
 
         if (showQuarter.checked) {

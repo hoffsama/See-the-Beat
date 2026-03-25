@@ -1,8 +1,48 @@
-document.getElementById('toggleButton').addEventListener('click', function() {
-    const circle = document.getElementById('circle');
-    if (circle.style.backgroundColor === 'red') {
-        circle.style.backgroundColor = 'green';
+let isPlaying = false;
+let currentIndex = 0;
+let intervalId;
+
+const circles = document.querySelectorAll('.circle');
+const toggleButton = document.getElementById('toggleButton');
+const bpmSlider = document.getElementById('bpmSlider');
+const bpmValue = document.getElementById('bpmValue');
+
+const colors = ['red', 'green', 'blue', 'yellow'];
+
+function updateBPM() {
+    const bpm = bpmSlider.value;
+    bpmValue.textContent = bpm;
+    const interval = 60000 / bpm / 4; // 16th notes
+    if (isPlaying) {
+        clearInterval(intervalId);
+        intervalId = setInterval(activateNext, interval);
+    }
+}
+
+function activateNext() {
+    circles.forEach(circle => {
+        circle.style.backgroundColor = 'gray';
+        circle.classList.remove('beat');
+    });
+    const section = Math.floor(currentIndex / 4);
+    circles[currentIndex].style.backgroundColor = colors[section];
+    if (currentIndex % 4 === 0) {
+        circles[currentIndex].classList.add('beat');
+    }
+    currentIndex = (currentIndex + 1) % 16;
+}
+
+toggleButton.addEventListener('click', () => {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+        updateBPM();
+        toggleButton.textContent = 'Stop';
     } else {
-        circle.style.backgroundColor = 'red';
+        clearInterval(intervalId);
+        toggleButton.textContent = 'Start';
+        circles.forEach(circle => circle.style.backgroundColor = 'gray');
+        currentIndex = 0;
     }
 });
+
+bpmSlider.addEventListener('input', updateBPM);

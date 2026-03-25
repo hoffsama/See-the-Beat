@@ -96,8 +96,9 @@ function updateFeedback(diff, diffSpan, bar) {
     const bound = parseInt(errorBound.value);
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
     const absSec = (Math.abs(diff) / 1000).toFixed(3);
-    diffSpan.textContent = `${diff}ms (${absSec}s ${sign})`;
-    if (Math.abs(diff) > bound) {
+    const miss = Math.abs(diff) > bound;
+    diffSpan.textContent = `${diff}ms (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
+    if (miss) {
         bar.style.backgroundColor = 'red';
     } else {
         const accuracy = 1 - Math.abs(diff) / bound;

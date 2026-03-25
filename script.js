@@ -7,18 +7,18 @@ const toggleButton = document.getElementById('toggleButton');
 const bpmSlider = document.getElementById('bpmSlider');
 const bpmValue = document.getElementById('bpmValue');
 
-const myColor1 = #ffadae;
-const myColor2 = #ffd7a6;
-const myColor3 = #feffb7;
-const myColor4 = #c9ffbf;
+const myColor1 = '#ffadae';
+const myColor2 = '#ffd7a6';
+const myColor3 = '#feffb7';
+const myColor4 = '#c9ffbf';
 
 const colors = [myColor1, myColor2, myColor3, myColor4];
 
 function updateBPM() {
     const bpm = bpmSlider.value;
     bpmValue.textContent = bpm;
-    const interval = 60000 / bpm / 4; // 16th notes
     if (isPlaying) {
+        const interval = 60000 / bpm / 4; // 16th notes
         clearInterval(intervalId);
         intervalId = setInterval(activateNext, interval);
     }

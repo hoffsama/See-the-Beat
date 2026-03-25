@@ -22,29 +22,45 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 220px;
-    max-width: 240px;
-    background: transparent;
+    width: 240px;
+    background: rgba(255,255,255,0);
     border: none;
-    border-radius: 0;
     padding: 0;
     box-sizing: border-box;
     color: white;
 }
 
-#feedback > div {
-    margin: 4px 0;
-    font-size: 11px;
-    display: block;
+.feedback-row {
+    margin: 6px 0;
+    font-size: 12px;
+    color: #fff;
 }
 
-#feedback .bar-label {
-    position: relative;
-    display: inline-block;
-    margin-right: 8px;
-    font-size: 10px;
+.row-label {
+    margin-bottom: 2px;
+    font-size: 11px;
     font-weight: bold;
-    color: black;
+    color: #ddd;
+}
+
+.row-values {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.diff-text {
+    min-width: 100px;
+    font-size: 11px;
+    color: #fff;
+}
+
+.feedback-bar {
+    flex: 1;
+    height: 16px;
+    border-radius: 8px;
+    background-color: gray;
+    border: 1px solid #000;
 }
 
 #noteBar, #quarterBar, #halfBar {

@@ -25,9 +25,27 @@
         <div class="circle" id="circle15"></div>
         <div class="circle" id="circle16"></div>
         <div id="feedback">
-        <div id="wholeFeedback"><div id="wholeBar"><span class="bar-label">Whole</span><span id="wholeDiff">--</span></div></div>
-        <div id="quarterFeedback"><div id="quarterBar"><span class="bar-label">Quarter</span><span id="quarterDiff">--</span></div></div>
-        <div id="halfFeedback"><div id="halfBar"><span class="bar-label">Half</span><span id="halfDiff">--</span></div></div>
+            <div id="wholeFeedback" class="feedback-row">
+                <div class="row-label">Whole</div>
+                <div class="row-values">
+                    <span class="diff-text" id="wholeDiff">--</span>
+                    <div class="feedback-bar" id="wholeBar"></div>
+                </div>
+            </div>
+            <div id="quarterFeedback" class="feedback-row">
+                <div class="row-label">Quarter</div>
+                <div class="row-values">
+                    <span class="diff-text" id="quarterDiff">--</span>
+                    <div class="feedback-bar" id="quarterBar"></div>
+                </div>
+            </div>
+            <div id="halfFeedback" class="feedback-row">
+                <div class="row-label">Half</div>
+                <div class="row-values">
+                    <span class="diff-text" id="halfDiff">--</span>
+                    <div class="feedback-bar" id="halfBar"></div>
+                </div>
+            </div>
         </div>
     </div>
     <button id="toggleButton">Start</button>

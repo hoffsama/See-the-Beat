@@ -73,15 +73,38 @@ function updateFeedback(diff, diffSpan, bar) {
 }
 
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
+    if (e.code === 'Space' && isPlaying) {
         e.preventDefault();
         const now = Date.now();
-        const diffNote = now - lastNoteTime;
-        const diffQuarter = now - lastQuarterTime;
-        const diffHalf = now - lastHalfTime;
-        updateFeedback(diffNote, noteDiff, noteBar);
-        updateFeedback(diffQuarter, quarterDiff, quarterBar);
-        updateFeedback(diffHalf, halfDiff, halfBar);
+        const bpm = parseInt(bpmSlider.value);
+        const interval = 60000 / bpm / 4;
+        const diff = now - lastNoteTime;
+
+        // Note (16th)
+        const noteOffset = Math.round(diff / interval);
+        const closestNoteTime = lastNoteTime + noteOffset * interval;
+        const noteDiff = now - closestNoteTime;
+        updateFeedback(noteDiff, noteDiff, noteBar);
+
+        // Quarter
+        const currentMod4 = currentIndex % 4;
+        const offsetToNextQuarter = (4 - currentMod4) % 4;
+        const nextQuarterTime = lastNoteTime + offsetToNextQuarter * interval;
+        const prevQuarterTime = lastNoteTime + (offsetToNextQuarter - 4) * interval;
+        const diffNextQ = Math.abs(now - nextQuarterTime);
+        const diffPrevQ = Math.abs(now - prevQuarterTime);
+        const quarterDiff = diffNextQ < diffPrevQ ? now - nextQuarterTime : now - prevQuarterTime;
+        updateFeedback(quarterDiff, quarterDiff, quarterBar);
+
+        // Half
+        const currentMod8 = currentIndex % 8;
+        const offsetToNextHalf = (8 - currentMod8) % 8;
+        const nextHalfTime = lastNoteTime + offsetToNextHalf * interval;
+        const prevHalfTime = lastNoteTime + (offsetToNextHalf - 8) * interval;
+        const diffNextH = Math.abs(now - nextHalfTime);
+        const diffPrevH = Math.abs(now - prevHalfTime);
+        const halfDiff = diffNextH < diffPrevH ? now - nextHalfTime : now - prevHalfTime;
+        updateFeedback(halfDiff, halfDiff, halfBar);
     }
 });
 

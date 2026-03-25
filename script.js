@@ -1,110 +1,98 @@
-let isPlaying = false;
-let currentIndex = 0;
-let intervalId;
-let lastNoteTime = 0;
-let lastQuarterTime = 0;
-let lastHalfTime = 0;
-let wholeAwaiting = false;
-let quarterAwaiting = false;
-let halfAwaiting = false;
-let wholeTriggerTime = 0;
-let quarterTriggerTime = 0;
-let halfTriggerTime = 0;
+// ============================================================================
+// BEAT SEQUENCER - Refactored Architecture
+// ============================================================================
 
-let trackingActive = true;
-let wholesHistory = [];
-let quartersHistory = [];
-let halvesHistory = [];
-let statsTimerId = null;
-const statsButton = document.getElementById('statsButton');
-const statsTimer = document.getElementById('statsTimer');
-const statsText = document.getElementById('statsText');
+// Config: Note types and their timing subdivisions
+const NOTE_TYPES = {
+    whole: { label: 'Whole', interval: 4 },
+    quarter: { label: 'Quarter', interval: 1 },
+    half: { label: 'Half', interval: 8 }
+};
 
-const circles = document.querySelectorAll('.circle');
-const toggleButton = document.getElementById('toggleButton');
-const bpmSlider = document.getElementById('bpmSlider');
-const bpmValue = document.getElementById('bpmValue');
-const errorBound = document.getElementById('errorBound');
-const errorValue = document.getElementById('errorValue');
-const colorBound = document.getElementById('colorBound');
-const colorValue = document.getElementById('colorValue');
-const wholeDiff = document.getElementById('wholeDiff');
-const quarterDiff = document.getElementById('quarterDiff');
-const halfDiff = document.getElementById('halfDiff');
-const wholeBar = document.getElementById('wholeBar');
-const quarterBar = document.getElementById('quarterBar');
-const halfBar = document.getElementById('halfBar');
-const showWhole = document.getElementById('showWhole');
-const wholeDisplay = document.getElementById('wholeDisplay');
-const showQuarter = document.getElementById('showQuarter');
-const quarterDisplay = document.getElementById('quarterDisplay');
-const showHalf = document.getElementById('showHalf');
-const halfDisplay = document.getElementById('halfDisplay');
+// State
+const state = {
+    isPlaying: false,
+    currentIndex: 0,
+    intervalId: null,
+    trackingActive: true,
+    statsTimerId: null,
+    notes: {
+        whole: { awaiting: false, triggerTime: 0, lastTime: 0, history: [] },
+        quarter: { awaiting: false, triggerTime: 0, lastTime: 0, history: [] },
+        half: { awaiting: false, triggerTime: 0, lastTime: 0, history: [] }
+    }
+};
 
-function updateDisplays() {
-    const wholeFeedback = document.getElementById('wholeFeedback');
-    const wholeSpan = document.getElementById('wholeDiff');
-    const wholeBar = document.getElementById('wholeBar');
-    wholeFeedback.style.display = showWhole.checked ? 'block' : 'none';
-    const nMode = wholeDisplay.value;
-    wholeSpan.style.display = (nMode === 'ms' || nMode === 'both') ? 'inline' : 'none';
-    wholeBar.style.display = (nMode === 'color' || nMode === 'both') ? 'block' : 'none';
+// DOM Cache
+const dom = {
+    circles: document.querySelectorAll('.circle'),
+    toggleButton: document.getElementById('toggleButton'),
+    bpmSlider: document.getElementById('bpmSlider'),
+    bpmValue: document.getElementById('bpmValue'),
+    errorBound: document.getElementById('errorBound'),
+    errorValue: document.getElementById('errorValue'),
+    colorBound: document.getElementById('colorBound'),
+    colorValue: document.getElementById('colorValue'),
+    statsButton: document.getElementById('statsButton'),
+    statsTimer: document.getElementById('statsTimer'),
+    statsText: document.getElementById('statsText'),
+    feedback: {}
+};
 
-    const quarterFeedback = document.getElementById('quarterFeedback');
-    const quarterSpan = document.getElementById('quarterDiff');
-    const quarterBar = document.getElementById('quarterBar');
-    quarterFeedback.style.display = showQuarter.checked ? 'block' : 'none';
-    const qMode = quarterDisplay.value;
-    quarterSpan.style.display = (qMode === 'ms' || qMode === 'both') ? 'inline' : 'none';
-    quarterBar.style.display = (qMode === 'color' || qMode === 'both') ? 'block' : 'none';
+// Populate feedback DOM references
+Object.keys(NOTE_TYPES).forEach(type => {
+    dom.feedback[type] = {
+        container: document.getElementById(`${type}Feedback`),
+        diffText: document.getElementById(`${type}Diff`),
+        bar: document.getElementById(`${type}Bar`),
+        checkbox: document.getElementById(`show${type.charAt(0).toUpperCase() + type.slice(1)}`),
+        display: document.getElementById(`${type}Display`)
+    };
+});
 
-    const halfFeedback = document.getElementById('halfFeedback');
-    const halfSpan = document.getElementById('halfDiff');
-    const halfBar = document.getElementById('halfBar');
-    halfFeedback.style.display = showHalf.checked ? 'block' : 'none';
-    const hMode = halfDisplay.value;
-    halfSpan.style.display = (hMode === 'ms' || hMode === 'both') ? 'inline' : 'none';
-    halfBar.style.display = (hMode === 'color' || hMode === 'both') ? 'block' : 'none';
-}
-
-const myColor1 = '#ffadae';
-const myColor2 = '#ffd7a6';
-const myColor3 = '#feffb7';
-const myColor4 = '#c9ffbf';
-
-const colors = [myColor1, myColor2, myColor3, myColor4];
+// ============================================================================
+// Update Functions
+// ============================================================================
 
 function updateBPM() {
-    const bpm = bpmSlider.value;
-    bpmValue.textContent = bpm;
-    if (isPlaying) {
-        const interval = 60000 / bpm / 4; // 16th notes
-        clearInterval(intervalId);
-        intervalId = setInterval(activateNext, interval);
+    const bpm = dom.bpmSlider.value;
+    dom.bpmValue.textContent = bpm;
+    if (state.isPlaying) {
+        const interval = 60000 / bpm / 4;
+        clearInterval(state.intervalId);
+        state.intervalId = setInterval(activateNext, interval);
     }
 }
 
 function updateError() {
-    errorValue.textContent = errorBound.value;
+    dom.errorValue.textContent = dom.errorBound.value;
 }
 
 function updateColorBound() {
-    colorValue.textContent = colorBound.value;
+    dom.colorValue.textContent = dom.colorBound.value;
 }
 
+function updateDisplays() {
+    Object.keys(NOTE_TYPES).forEach(type => {
+        const fb = dom.feedback[type];
+        const isShown = fb.checkbox.checked;
+        const mode = fb.display.value;
+        
+        fb.container.style.display = isShown ? 'block' : 'none';
+        fb.diffText.style.display = (mode === 'ms' || mode === 'both') ? 'inline' : 'none';
+        fb.bar.style.display = (mode === 'color' || mode === 'both') ? 'block' : 'none';
+    });
+}
+
+// ============================================================================
+// Feedback & Recording
+// ============================================================================
+
 function recordStat(type, diff, miss) {
-    if (!trackingActive) return;
-    const entry = {diff, miss, time: Date.now()};
-    if (type === 'whole') {
-        wholesHistory.push(entry);
-        if (wholesHistory.length > 100) wholesHistory.shift();
-    } else if (type === 'quarter') {
-        quartersHistory.push(entry);
-        if (quartersHistory.length > 100) quartersHistory.shift();
-    } else if (type === 'half') {
-        halvesHistory.push(entry);
-        if (halvesHistory.length > 100) halvesHistory.shift();
-    }
+    if (!state.trackingActive) return;
+    const history = state.notes[type].history;
+    history.push({ diff, miss, time: Date.now() });
+    if (history.length > 100) history.shift();
 }
 
 function formatStats(history) {
@@ -116,172 +104,151 @@ function formatStats(history) {
 }
 
 function showStats() {
-    const wholeStats = formatStats(wholesHistory);
-    const quarterStats = formatStats(quartersHistory);
-    const halfStats = formatStats(halvesHistory);
-    statsText.textContent = `Whole: ${wholeStats}; Quarter: ${quarterStats}; Half: ${halfStats}`;
-    trackingActive = false;
+    const stats = Object.keys(NOTE_TYPES).map(type => 
+        `${NOTE_TYPES[type].label}: ${formatStats(state.notes[type].history)}`
+    ).join(' | ');
+    
+    dom.statsText.textContent = stats;
+    state.trackingActive = false;
     let countdown = 5;
-    statsTimer.style.display = 'inline';
-    statsTimer.textContent = `Resume in ${countdown}s`;
+    dom.statsTimer.style.display = 'inline';
+    dom.statsTimer.textContent = `Resume in ${countdown}s`;
 
-    statsTimerId = setInterval(() => {
-        countdown -= 1;
+    state.statsTimerId = setInterval(() => {
+        countdown--;
         if (countdown <= 0) {
-            clearInterval(statsTimerId);
-            trackingActive = true;
-            wholesHistory = [];
-            quartersHistory = [];
-            halvesHistory = [];
-            statsTimer.textContent = 'Tracking';
-            setTimeout(() => { statsTimer.style.display = 'none'; }, 1000);
+            clearInterval(state.statsTimerId);
+            state.trackingActive = true;
+            Object.keys(state.notes).forEach(type => state.notes[type].history = []);
+            dom.statsTimer.textContent = 'Tracking';
+            setTimeout(() => { dom.statsTimer.style.display = 'none'; }, 1000);
         } else {
-            statsTimer.textContent = `Resume in ${countdown}s`;
+            dom.statsTimer.textContent = `Resume in ${countdown}s`;
         }
     }, 1000);
 }
 
-function activateNext() {
-    const now = Date.now();
-
-    // Quarter note (every step): if it was pending, mark miss
-    if (quarterAwaiting) {
-        const missDiff = now - quarterTriggerTime;
-        updateFeedback('quarter', missDiff, quarterDiff, quarterBar, true);
-    } else {
-        clearFeedback(quarterDiff, quarterBar);
-    }
-
-    // Whole note (every 4 steps)
-    if (currentIndex % 4 === 0) {
-        if (wholeAwaiting) {
-            const missDiff = now - wholeTriggerTime;
-            updateFeedback('whole', missDiff, wholeDiff, wholeBar, true);
-        } else {
-            clearFeedback(wholeDiff, wholeBar);
-        }
-    }
-
-    // Half note (every 8 steps)
-    if (currentIndex % 8 === 0) {
-        if (halfAwaiting) {
-            const missDiff = now - halfTriggerTime;
-            updateFeedback('half', missDiff, halfDiff, halfBar, true);
-        } else {
-            clearFeedback(halfDiff, halfBar);
-        }
-    }
-
-    // Start current whole/quarter/half cycle
-    quarterAwaiting = true;
-    quarterTriggerTime = now;
-
-    if (currentIndex % 4 === 0) {
-        wholeAwaiting = true;
-        wholeTriggerTime = now;
-    } else {
-        wholeAwaiting = false;
-    }
-
-    if (currentIndex % 8 === 0) {
-        halfAwaiting = true;
-        halfTriggerTime = now;
-    } else {
-        halfAwaiting = false;
-    }
-
-    lastNoteTime = now;
-    if (currentIndex % 4 === 0) {
-        lastQuarterTime = now;
-    }
-    if (currentIndex % 8 === 0) {
-        lastHalfTime = now;
-    }
-
-    circles.forEach(circle => {
-        circle.style.backgroundColor = '#333';
-        circle.classList.remove('beat');
-    });
-    circles[currentIndex].style.backgroundColor = '#33ccff'; // fixed active note color (not note-type dependent)
-    if (currentIndex % 4 === 0) {
-        circles[currentIndex].classList.add('beat');
-    }
-    currentIndex = (currentIndex + 1) % 16;
-}
-
-function clearFeedback(diffSpan, bar) {
-    diffSpan.textContent = '--';
-    bar.style.backgroundColor = 'gray';
-}
-
-function updateFeedback(type, diff, diffSpan, bar, forceMiss = false) {
-    const hitBound = parseInt(errorBound.value);
-    const colorBoundVal = parseInt(colorBound.value);
+function updateFeedback(type, diff, forceMiss = false) {
+    const fb = dom.feedback[type];
+    const hitBound = parseInt(dom.errorBound.value);
+    const colorBoundVal = parseInt(dom.colorBound.value);
+    
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
     const absSec = (Math.abs(diff) / 1000).toFixed(3);
     const miss = forceMiss || Math.abs(diff) > hitBound;
     const diffMs = `${Math.round(diff)}ms`;
 
-    diffSpan.textContent = `${diffMs} (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
+    fb.diffText.textContent = `${diffMs} (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
 
     if (miss) {
-        bar.style.backgroundColor = 'red';
+        fb.bar.style.backgroundColor = 'red';
         recordStat(type, diff, true);
-        return;
+    } else {
+        const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
+        const hue = 120 * (1 - normalized);
+        fb.bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+        recordStat(type, diff, false);
     }
-
-    const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
-    const hue = 120 * (1 - normalized); // 0=green, 120=red as diff increases
-    bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-    recordStat(type, diff, false);
 }
 
+function clearFeedback(type) {
+    const fb = dom.feedback[type];
+    fb.diffText.textContent = '--';
+    fb.bar.style.backgroundColor = 'gray';
+}
+
+function activateNext() {
+    const now = Date.now();
+
+    // Check & mark missed notes
+    Object.keys(NOTE_TYPES).forEach(type => {
+        const noteType = NOTE_TYPES[type];
+        const note = state.notes[type];
+        
+        if (state.currentIndex % noteType.interval === 0) {
+            if (note.awaiting) {
+                const missDiff = now - note.triggerTime;
+                updateFeedback(type, missDiff, true);
+            } else {
+                clearFeedback(type);
+            }
+        }
+    });
+
+    // Start new note cycles
+    Object.keys(NOTE_TYPES).forEach(type => {
+        const noteType = NOTE_TYPES[type];
+        const note = state.notes[type];
+        
+        const shouldTrigger = state.currentIndex % noteType.interval === 0;
+        
+        if (shouldTrigger) {
+            note.awaiting = true;
+            note.triggerTime = now;
+            note.lastTime = now;
+        } else {
+            note.awaiting = false;
+        }
+    });
+
+    // Update circle display
+    dom.circles.forEach(circle => {
+        circle.style.backgroundColor = '#333';
+        circle.classList.remove('beat');
+    });
+    
+    dom.circles[state.currentIndex].style.backgroundColor = '#33ccff';
+    if (state.currentIndex % 4 === 0) {
+        dom.circles[state.currentIndex].classList.add('beat');
+    }
+    
+    state.currentIndex = (state.currentIndex + 1) % 16;
+}
+
+// ============================================================================
+// Event Handlers
+// ============================================================================
+
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && isPlaying) {
+    if (e.code === 'Space' && state.isPlaying) {
         e.preventDefault();
         const now = Date.now();
-        const bpm = parseInt(bpmSlider.value);
-        const interval = 60000 / bpm / 4;
 
-        if (showQuarter.checked && quarterAwaiting) {
-            const quarterDiffVal = now - quarterTriggerTime;
-            updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
-            quarterAwaiting = false;
-        }
-        if (showWhole.checked && wholeAwaiting) {
-            const wholeDiffVal = now - wholeTriggerTime;
-            updateFeedback('whole', wholeDiffVal, wholeDiff, wholeBar);
-            wholeAwaiting = false;
-        }
-        if (showHalf.checked && halfAwaiting) {
-            const halfDiffVal = now - halfTriggerTime;
-            updateFeedback('half', halfDiffVal, halfDiff, halfBar);
-            halfAwaiting = false;
-        }
+        Object.keys(NOTE_TYPES).forEach(type => {
+            const fb = dom.feedback[type];
+            const note = state.notes[type];
+            
+            if (fb.checkbox.checked && note.awaiting) {
+                const diffVal = now - note.triggerTime;
+                updateFeedback(type, diffVal);
+                note.awaiting = false;
+            }
+        });
     }
 });
 
-toggleButton.addEventListener('click', () => {
-    isPlaying = !isPlaying;
-    if (isPlaying) {
+dom.toggleButton.addEventListener('click', () => {
+    state.isPlaying = !state.isPlaying;
+    if (state.isPlaying) {
         updateBPM();
-        toggleButton.textContent = 'Stop';
+        dom.toggleButton.textContent = 'Stop';
     } else {
-        clearInterval(intervalId);
-        toggleButton.textContent = 'Start';
-        circles.forEach(circle => circle.style.backgroundColor = '#333');
-        currentIndex = 0;
+        clearInterval(state.intervalId);
+        dom.toggleButton.textContent = 'Start';
+        dom.circles.forEach(circle => circle.style.backgroundColor = '#333');
+        state.currentIndex = 0;
     }
 });
 
-bpmSlider.addEventListener('input', updateBPM);
-errorBound.addEventListener('input', updateError);
-colorBound.addEventListener('input', updateColorBound);
-statsButton.addEventListener('click', showStats);
-showQuarter.addEventListener('change', updateDisplays);
-quarterDisplay.addEventListener('change', updateDisplays);
-showHalf.addEventListener('change', updateDisplays);
-halfDisplay.addEventListener('change', updateDisplays);
+dom.bpmSlider.addEventListener('input', updateBPM);
+dom.errorBound.addEventListener('input', updateError);
+dom.colorBound.addEventListener('input', updateColorBound);
+dom.statsButton.addEventListener('click', showStats);
 
-// Initialize displays
-updateDisplays();
+Object.keys(NOTE_TYPES).forEach(type => {
+    const fb = dom.feedback[type];
+    fb.checkbox.addEventListener('change', updateDisplays);
+    fb.display.addEventListener('change', updateDisplays);
+});
+
+// Initialize

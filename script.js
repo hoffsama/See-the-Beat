@@ -1,16 +1,80 @@
 // ============================================================================
-// BEAT SEQUENCER - Refactored Architecture
+// AUDIO SYSTEM
 // ============================================================================
 
-// Config: Note types and their timing subdivisions
-const NOTE_TYPES = {
-    whole: { label: 'Whole', interval: 4 },
-    quarter: { label: 'Quarter', interval: 1 },
-    half: { label: 'Half', interval: 8 }
-};
+class AudioEngine {
+    constructor() {
+        this.audioContext = null;
+        this.isInitialized = false;
+        this.sounds = {};
+    }
 
-// Calibration offset (ms) — subtract from raw timing to correct for input latency
-const CALIBRATION_OFFSET = 15;
+    async init() {
+        if (this.isInitialized) return;
+
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await this.audioContext.resume(); // Required for some browsers
+            this.isInitialized = true;
+            this.createSounds();
+        } catch (error) {
+            console.warn('Audio not available:', error);
+        }
+    }
+
+    createSounds() {
+        if (!this.audioContext) return;
+
+        // Create different sounds for each note type
+        this.sounds = {
+            whole: this.createTone(220, 'sine', 0.3),      // Low A (220Hz)
+            quarter: this.createTone(330, 'square', 0.2),   // High E (330Hz)
+            half: this.createTone(440, 'triangle', 0.25)    // A above middle C (440Hz)
+        };
+    }
+
+    createTone(frequency, waveType, duration) {
+        return {
+            frequency,
+            waveType,
+            duration,
+            play: () => this.playTone(frequency, waveType, duration)
+        };
+    }
+
+    playTone(frequency, waveType, duration) {
+        if (!this.audioContext) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        oscillator.type = waveType;
+
+        // Envelope for smooth attack/decay
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+
+    playNote(type) {
+        if (!this.isInitialized) return;
+
+        const sound = this.sounds[type];
+        if (sound) {
+            sound.play();
+        }
+    }
+}
+
+// Initialize audio engine
+const audioEngine = new AudioEngine();
 
 // State
 const state = {
@@ -356,13 +420,15 @@ function activateNext() {
     Object.keys(NOTE_TYPES).forEach(type => {
         const noteType = NOTE_TYPES[type];
         const note = state.notes[type];
-        
         const shouldTrigger = state.currentIndex % noteType.interval === 0;
-        
+
         if (shouldTrigger) {
             note.awaiting = true;
             note.triggerTime = now;
             note.lastTime = now;
+
+            // Play sound for this note type
+            audioEngine.playNote(type);
         } else {
             note.awaiting = false;
         }
@@ -374,7 +440,7 @@ function activateNext() {
         circle.classList.remove('beat');
     });
     
-    dom.circles[state.currentIndex].style.backgroundColor = '#33ccff';
+    dom.circles[state.currentIndex].style.backgroundColor = '#ffb5c7';
     if (state.currentIndex % 4 === 0) {
         dom.circles[state.currentIndex].classList.add('beat');
     }
@@ -386,7 +452,12 @@ function activateNext() {
 // Event Handlers
 // ============================================================================
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', async (e) => {
+    // Initialize audio on first interaction
+    if (!audioEngine.isInitialized && e.code === 'Space') {
+        await audioEngine.init();
+    }
+
     if (e.code === 'Space' && state.isPlaying) {
         e.preventDefault();
         const now = Date.now();
@@ -408,7 +479,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-dom.toggleButton.addEventListener('click', () => {
+dom.toggleButton.addEventListener('click', async () => {
+    // Initialize audio on first play
+    if (!audioEngine.isInitialized) {
+        await audioEngine.init();
+    }
+
     state.isPlaying = !state.isPlaying;
     if (state.isPlaying) {
         updateBPM();

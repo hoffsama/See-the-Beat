@@ -10,7 +10,7 @@ const NOTE_TYPES = {
 };
 
 // Calibration offset (ms) — subtract from raw timing to correct for input latency
-const CALIBRATION_OFFSET = 18;
+const CALIBRATION_OFFSET = 18+15;
 
 // State
 const state = {

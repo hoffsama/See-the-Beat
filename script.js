@@ -17,6 +17,8 @@ const bpmSlider = document.getElementById('bpmSlider');
 const bpmValue = document.getElementById('bpmValue');
 const errorBound = document.getElementById('errorBound');
 const errorValue = document.getElementById('errorValue');
+const colorBound = document.getElementById('colorBound');
+const colorValue = document.getElementById('colorValue');
 const noteDiff = document.getElementById('noteDiff');
 const quarterDiff = document.getElementById('quarterDiff');
 const halfDiff = document.getElementById('halfDiff');
@@ -77,23 +79,39 @@ function updateError() {
     errorValue.textContent = errorBound.value;
 }
 
+function updateColorBound() {
+    colorValue.textContent = colorBound.value;
+}
+
 function activateNext() {
     const now = Date.now();
 
-    // If previous note was never pressed, mark miss
+    // If previous note was never pressed, mark miss; otherwise clear previous state
     if (noteAwaiting) {
         const missDiff = now - noteTriggerTime;
         updateFeedback(missDiff, noteDiff, noteBar);
-        noteAwaiting = false;
+    } else {
+        clearFeedback(noteDiff, noteBar);
     }
-    if (quarterAwaiting && (currentIndex % 4 === 0 || currentIndex === 0)) {
-        const missDiff = now - quarterTriggerTime;
-        updateFeedback(missDiff, quarterDiff, quarterBar);
+    noteAwaiting = false;
+
+    if (currentIndex % 4 === 0 || currentIndex === 0) {
+        if (quarterAwaiting) {
+            const missDiff = now - quarterTriggerTime;
+            updateFeedback(missDiff, quarterDiff, quarterBar);
+        } else {
+            clearFeedback(quarterDiff, quarterBar);
+        }
         quarterAwaiting = false;
     }
-    if (halfAwaiting && (currentIndex % 8 === 0 || currentIndex === 0)) {
-        const missDiff = now - halfTriggerTime;
-        updateFeedback(missDiff, halfDiff, halfBar);
+
+    if (currentIndex % 8 === 0 || currentIndex === 0) {
+        if (halfAwaiting) {
+            const missDiff = now - halfTriggerTime;
+            updateFeedback(missDiff, halfDiff, halfBar);
+        } else {
+            clearFeedback(halfDiff, halfBar);
+        }
         halfAwaiting = false;
     }
 
@@ -129,19 +147,28 @@ function activateNext() {
     currentIndex = (currentIndex + 1) % 16;
 }
 
+function clearFeedback(diffSpan, bar) {
+    diffSpan.textContent = '--';
+    bar.style.backgroundColor = 'gray';
+}
+
 function updateFeedback(diff, diffSpan, bar) {
-    const bound = parseInt(errorBound.value);
+    const hitBound = parseInt(errorBound.value);
+    const colorBoundVal = parseInt(colorBound.value);
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
     const absSec = (Math.abs(diff) / 1000).toFixed(3);
-    const miss = Math.abs(diff) > bound;
+    const miss = Math.abs(diff) > hitBound;
+
     diffSpan.textContent = `${diff}ms (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
+
     if (miss) {
         bar.style.backgroundColor = 'red';
-    } else {
-        const accuracy = 1 - Math.abs(diff) / bound;
-        const hue = 120 * accuracy; // 0 red, 120 green
-        bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+        return;
     }
+
+    const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
+    const hue = 120 * (1 - normalized); // 0=green, 120=red as diff increases
+    bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
 }
 
 document.addEventListener('keydown', (e) => {
@@ -215,6 +242,7 @@ toggleButton.addEventListener('click', () => {
 
 bpmSlider.addEventListener('input', updateBPM);
 errorBound.addEventListener('input', updateError);
+colorBound.addEventListener('input', updateColorBound);
 showNote.addEventListener('change', updateDisplays);
 noteDisplay.addEventListener('change', updateDisplays);
 showQuarter.addEventListener('change', updateDisplays);

@@ -49,16 +49,23 @@
         </div>
     </div>
     <button id="toggleButton">Start</button>
-    <div>
-        <label for="bpmSlider">BPM: <span id="bpmValue">120</span></label>
-        <input type="range" id="bpmSlider" min="10" max="500" value="60">
-    </div>    <div>
-        <label for="errorBound">Error Bound (ms): <span id="errorValue">100</span></label>
-        <input type="range" id="errorBound" min="10" max="500" value="100">
-    </div>
-    <div>
-        <label for="colorBound">Color Bound (ms): <span id="colorValue">300</span></label>
-        <input type="range" id="colorBound" min="10" max="600" value="300">
+
+    <div class="sliders-container">
+        <div class="slider-row">
+            <label for="bpmSlider">BPM</label>
+            <input type="range" id="bpmSlider" min="10" max="500" value="60">
+            <span id="bpmValue">60</span>
+        </div>
+        <div class="slider-row">
+            <label for="errorBound">Hit Margin (ms)</label>
+            <input type="range" id="errorBound" min="10" max="500" value="100">
+            <span id="errorValue">100</span>
+        </div>
+        <div class="slider-row">
+            <label for="colorBound">Color Range (ms)</label>
+            <input type="range" id="colorBound" min="10" max="600" value="300">
+            <span id="colorValue">300</span>
+        </div>
     </div>
     <div id="controls">
         <div class="control-group">
@@ -91,9 +98,9 @@
     </div>
     <div id="statsPanel">
         <button id="statsButton">Show Stats</button>
-        <span id="statsTimer" style="margin-left: 12px; display: none; font-weight: bold;">Ready</span>
-        <div id="statsText" style="margin-top: 8px; font-size: 12px; color: #fff;"></div>
+        <div id="statsText"></div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

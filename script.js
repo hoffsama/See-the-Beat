@@ -19,6 +19,7 @@ const state = {
     intervalId: null,
     trackingActive: true,
     statsTimerId: null,
+    sessionStart: Date.now(),
     notes: {
         whole: { awaiting: false, triggerTime: 0, lastTime: 0, history: [] },
         quarter: { awaiting: false, triggerTime: 0, lastTime: 0, history: [] },
@@ -94,8 +95,50 @@ function updateDisplays() {
 function recordStat(type, diff, miss) {
     if (!state.trackingActive) return;
     const history = state.notes[type].history;
-    history.push({ diff, miss, time: Date.now() });
+    history.push({
+        diff,
+        miss,
+        time: Date.now(),
+        calibratedDiff: diff - CALIBRATION_OFFSET
+    });
     if (history.length > 100) history.shift();
+}
+
+function calculateDetailedStats(history) {
+    if (history.length === 0) {
+        return {
+            count: 0,
+            accuracy: 0,
+            avgAbsDiff: 0,
+            stdDev: 0,
+            best: 0,
+            worst: 0,
+            misses: 0
+        };
+    }
+
+    const absDiffs = history.map(item => Math.abs(item.calibratedDiff));
+    const avgAbsDiff = absDiffs.reduce((sum, val) => sum + val, 0) / absDiffs.length;
+    const misses = history.filter(item => item.miss).length;
+    const accuracy = ((history.length - misses) / history.length) * 100;
+
+    // Standard deviation
+    const variance = absDiffs.reduce((sum, val) => sum + Math.pow(val - avgAbsDiff, 2), 0) / absDiffs.length;
+    const stdDev = Math.sqrt(variance);
+
+    // Best and worst (closest to 0)
+    const best = Math.min(...absDiffs);
+    const worst = Math.max(...absDiffs);
+
+    return {
+        count: history.length,
+        accuracy: accuracy.toFixed(1),
+        avgAbsDiff: avgAbsDiff.toFixed(1),
+        stdDev: stdDev.toFixed(1),
+        best: best.toFixed(1),
+        worst: worst.toFixed(1),
+        misses
+    };
 }
 
 function formatStats(history) {
@@ -107,28 +150,153 @@ function formatStats(history) {
 }
 
 function showStats() {
-    const stats = Object.keys(NOTE_TYPES).map(type => 
-        `${NOTE_TYPES[type].label}: ${formatStats(state.notes[type].history)}`
-    ).join(' | ');
-    
-    dom.statsText.textContent = stats;
+    const sessionDuration = Math.round((Date.now() - state.sessionStart) / 1000);
+    const totalHits = Object.values(state.notes).reduce((sum, note) => sum + note.history.length, 0);
+    const totalMisses = Object.values(state.notes).reduce((sum, note) => sum + note.history.filter(h => h.miss).length, 0);
+    const overallAccuracy = totalHits > 0 ? ((totalHits - totalMisses) / totalHits * 100).toFixed(1) : 0;
+
+    let statsHTML = `
+        <div class="stats-header">
+            <div class="session-info">
+                <span class="session-time">Session: ${formatDuration(sessionDuration)}</span>
+                <span class="overall-accuracy">Overall: ${overallAccuracy}% accuracy</span>
+            </div>
+            <div class="stats-actions">
+                <button id="resetStats" class="reset-btn">Reset</button>
+                <button id="exportStats" class="export-btn">Export</button>
+            </div>
+        </div>
+        <div class="stats-grid">
+    `;
+
+    Object.keys(NOTE_TYPES).forEach(type => {
+        const stats = calculateDetailedStats(state.notes[type].history);
+        const noteType = NOTE_TYPES[type];
+
+        statsHTML += `
+            <div class="stat-card ${type}-card">
+                <div class="card-header">
+                    <h3>${noteType.label} Notes</h3>
+                    <div class="accuracy-badge ${stats.accuracy >= 90 ? 'excellent' : stats.accuracy >= 75 ? 'good' : 'needs-work'}">
+                        ${stats.accuracy}%
+                    </div>
+                </div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Hits</span>
+                        <span class="metric-value">${stats.count - stats.misses}/${stats.count}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Timing</span>
+                        <span class="metric-value">${stats.avgAbsDiff}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Consistency</span>
+                        <span class="metric-value">±${stats.stdDev}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Best</span>
+                        <span class="metric-value">${stats.best}ms</span>
+                    </div>
+                </div>
+                <div class="accuracy-bar">
+                    <div class="accuracy-fill" style="width: ${stats.accuracy}%"></div>
+                </div>
+            </div>
+        `;
+    });
+
+    statsHTML += `
+        </div>
+        <div class="stats-footer">
+            <span id="statsTimer" class="countdown">Resume in 5s</span>
+        </div>
+    `;
+
+    dom.statsText.innerHTML = statsHTML;
+    dom.statsText.classList.add('detailed-stats');
+
+    // Add event listeners for new buttons
+    setTimeout(() => {
+        const resetBtn = document.getElementById('resetStats');
+        const exportBtn = document.getElementById('exportStats');
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (confirm('Reset all stats for this session?')) {
+                    Object.keys(state.notes).forEach(type => state.notes[type].history = []);
+                    state.sessionStart = Date.now();
+                    showStats();
+                }
+            });
+        }
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportStats);
+        }
+    }, 0);
+
     state.trackingActive = false;
     let countdown = 5;
-    dom.statsTimer.style.display = 'inline';
-    dom.statsTimer.textContent = `Resume in ${countdown}s`;
+    const timerElement = document.getElementById('statsTimer');
 
     state.statsTimerId = setInterval(() => {
         countdown--;
+        if (timerElement) {
+            timerElement.textContent = countdown > 0 ? `Resume in ${countdown}s` : 'Resuming...';
+        }
+
         if (countdown <= 0) {
             clearInterval(state.statsTimerId);
             state.trackingActive = true;
-            Object.keys(state.notes).forEach(type => state.notes[type].history = []);
-            dom.statsTimer.textContent = 'Tracking';
-            setTimeout(() => { dom.statsTimer.style.display = 'none'; }, 1000);
-        } else {
-            dom.statsTimer.textContent = `Resume in ${countdown}s`;
+            dom.statsText.innerHTML = '';
+            dom.statsText.classList.remove('detailed-stats');
+            if (timerElement) {
+                timerElement.style.display = 'none';
+            }
         }
     }, 1000);
+}
+
+function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function exportStats() {
+    const data = {
+        session: {
+            start: state.sessionStart,
+            duration: Date.now() - state.sessionStart,
+            overallAccuracy: calculateOverallAccuracy()
+        },
+        notes: {}
+    };
+
+    Object.keys(NOTE_TYPES).forEach(type => {
+        data.notes[type] = {
+            label: NOTE_TYPES[type].label,
+            stats: calculateDetailedStats(state.notes[type].history),
+            history: state.notes[type].history
+        };
+    });
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `beat-sequencer-stats-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function calculateOverallAccuracy() {
+    const totalHits = Object.values(state.notes).reduce((sum, note) => sum + note.history.length, 0);
+    const totalMisses = Object.values(state.notes).reduce((sum, note) => sum + note.history.filter(h => h.miss).length, 0);
+    return totalHits > 0 ? ((totalHits - totalMisses) / totalHits * 100).toFixed(1) : 0;
 }
 
 function updateFeedback(type, diff, forceMiss = false) {

@@ -1,12 +1,8 @@
 #circles {
+    position: relative;
+    width: 280px;
+    height: 280px;
     margin: 20px auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    border: 2px solid black;
-    padding: 0;
-    background-color: #f0f0f0;
-    width: fit-content;
 }
 
 .circle {
@@ -16,7 +12,27 @@
     background-color: gray;
     margin: 0;
     transition: background-color 0.1s;
+    position: absolute;
+    top: 50%;
+    left: 50%;
 }
+
+.circle:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-120px) rotate(0deg); }
+.circle:nth-child(2) { transform: translate(-50%, -50%) rotate(22.5deg) translateY(-120px) rotate(-22.5deg); }
+.circle:nth-child(3) { transform: translate(-50%, -50%) rotate(45deg) translateY(-120px) rotate(-45deg); }
+.circle:nth-child(4) { transform: translate(-50%, -50%) rotate(67.5deg) translateY(-120px) rotate(-67.5deg); }
+.circle:nth-child(5) { transform: translate(-50%, -50%) rotate(90deg) translateY(-120px) rotate(-90deg); }
+.circle:nth-child(6) { transform: translate(-50%, -50%) rotate(112.5deg) translateY(-120px) rotate(-112.5deg); }
+.circle:nth-child(7) { transform: translate(-50%, -50%) rotate(135deg) translateY(-120px) rotate(-135deg); }
+.circle:nth-child(8) { transform: translate(-50%, -50%) rotate(157.5deg) translateY(-120px) rotate(-157.5deg); }
+.circle:nth-child(9) { transform: translate(-50%, -50%) rotate(180deg) translateY(-120px) rotate(-180deg); }
+.circle:nth-child(10) { transform: translate(-50%, -50%) rotate(202.5deg) translateY(-120px) rotate(-202.5deg); }
+.circle:nth-child(11) { transform: translate(-50%, -50%) rotate(225deg) translateY(-120px) rotate(-225deg); }
+.circle:nth-child(12) { transform: translate(-50%, -50%) rotate(247.5deg) translateY(-120px) rotate(-247.5deg); }
+.circle:nth-child(13) { transform: translate(-50%, -50%) rotate(270deg) translateY(-120px) rotate(-270deg); }
+.circle:nth-child(14) { transform: translate(-50%, -50%) rotate(292.5deg) translateY(-120px) rotate(-292.5deg); }
+.circle:nth-child(15) { transform: translate(-50%, -50%) rotate(315deg) translateY(-120px) rotate(-315deg); }
+.circle:nth-child(16) { transform: translate(-50%, -50%) rotate(337.5deg) translateY(-120px) rotate(-337.5deg); }
 
 .beat {
     border: 3px solid white;

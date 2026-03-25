@@ -7,7 +7,12 @@ const toggleButton = document.getElementById('toggleButton');
 const bpmSlider = document.getElementById('bpmSlider');
 const bpmValue = document.getElementById('bpmValue');
 
-const colors = ['red', 'green', 'blue', 'yellow'];
+const myColor1 = #ffadae;
+const myColor2 = #ffd7a6;
+const myColor3 = #feffb7;
+const myColor4 = #c9ffbf;
+
+const colors = [myColor1, myColor2, myColor3, myColor4];
 
 function updateBPM() {
     const bpm = bpmSlider.value;

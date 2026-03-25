@@ -9,6 +9,9 @@ const NOTE_TYPES = {
     half: { label: 'Half', interval: 8 }
 };
 
+// Calibration offset (ms) — subtract from raw timing to correct for input latency
+const CALIBRATION_OFFSET = 18;
+
 // State
 const state = {
     isPlaying: false,
@@ -133,21 +136,24 @@ function updateFeedback(type, diff, forceMiss = false) {
     const hitBound = parseInt(dom.errorBound.value);
     const colorBoundVal = parseInt(dom.colorBound.value);
     
-    const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
-    const absSec = (Math.abs(diff) / 1000).toFixed(3);
-    const miss = forceMiss || Math.abs(diff) > hitBound;
-    const diffMs = `${Math.round(diff)}ms`;
+    // Apply calibration offset to correct for input latency
+    const calibratedDiff = diff - CALIBRATION_OFFSET;
+    
+    const sign = calibratedDiff < 0 ? 'early' : calibratedDiff > 0 ? 'late' : 'on time';
+    const absSec = (Math.abs(calibratedDiff) / 1000).toFixed(3);
+    const miss = forceMiss || Math.abs(diff) > hitBound; // Use raw diff for miss detection
+    const diffMs = `${Math.round(calibratedDiff)}ms`;
 
     fb.diffText.textContent = `${diffMs} (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
     
     // Debug logging for timing analysis
-    console.log(`[${type}] trigger=${state.notes[type].triggerTime} | now=${Date.now()} | diff=${diff}ms | miss=${miss}`);
+    console.log(`[${type}] raw=${diff}ms | calibrated=${calibratedDiff}ms | miss=${miss}`);
 
     if (miss) {
         fb.bar.style.backgroundColor = 'red';
         recordStat(type, diff, true);
     } else {
-        const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
+        const normalized = Math.min(Math.abs(calibratedDiff), colorBoundVal) / colorBoundVal;
         const hue = 120 * (1 - normalized);
         fb.bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
         recordStat(type, diff, false);

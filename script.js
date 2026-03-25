@@ -25,11 +25,15 @@ class AudioEngine {
     createSounds() {
         if (!this.audioContext) return;
 
-        // Create different sounds for each note type
         this.sounds = {
-            whole: this.createTone(220, 'triangle', 0.3),   // Low A
-            quarter: this.createTone(330, 'triangle', 0.2), // E (Perfect 5th above A)
-            half: this.createTone(440, 'triangle', 0.25)   // High A (Octave above A)
+            // A: The Drum (Deep Kick) - Low frequency, smooth sine
+            a: { freq: 60, type: 'sine', volume: 0.8 },
+            
+            // B: The Hi-Hat (Metallic Click) - Very high frequency, buzzy square
+            b: { freq: 8000, type: 'square', volume: 0.15 },
+            
+            // C: The Third Drum (Mid Tom) - Middle frequency, hollow triangle
+            c: { freq: 200, type: 'triangle', volume: 0.5 }
         };
     }
 

@@ -76,6 +76,73 @@ class AudioEngine {
 // Initialize audio engine
 const audioEngine = new AudioEngine();
 
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+// Config: Note types and their timing subdivisions
+const NOTE_TYPES = {
+    whole: { label: 'Whole', interval: 4 },
+    quarter: { label: 'Quarter', interval: 1 },
+    half: { label: 'Half', interval: 8 }
+};
+
+// Calibration offset (ms) — subtract from raw timing to correct for input latency
+const CALIBRATION_OFFSET = 18;
+
+// ============================================================================
+// COLOR SCHEME
+// ============================================================================
+
+const COLOR_GROUPS = {
+    reds: [
+        'hsl(0, 70%, 25%)',   // Dark red
+        'hsl(0, 75%, 30%)',   // Red
+        'hsl(0, 80%, 35%)',   // Lighter red
+        'hsl(0, 85%, 40%)'    // Bright red
+    ],
+    greens: [
+        'hsl(120, 70%, 25%)', // Dark green
+        'hsl(120, 75%, 30%)', // Green
+        'hsl(120, 80%, 35%)', // Lighter green
+        'hsl(120, 85%, 40%)'  // Bright green
+    ],
+    pinks: [
+        'hsl(300, 70%, 25%)', // Dark pink/magenta
+        'hsl(300, 75%, 30%)', // Pink
+        'hsl(300, 80%, 35%)', // Lighter pink
+        'hsl(300, 85%, 40%)'  // Bright pink
+    ],
+    blues: [
+        'hsl(240, 70%, 25%)', // Dark blue
+        'hsl(240, 75%, 30%)', // Blue
+        'hsl(240, 80%, 35%)', // Lighter blue
+        'hsl(240, 85%, 40%)'  // Bright blue
+    ]
+};
+
+const ACTIVE_COLORS = {
+    reds: 'hsl(0, 100%, 60%)',    // Bright red for active
+    greens: 'hsl(120, 100%, 60%)', // Bright green for active
+    pinks: 'hsl(300, 100%, 60%)',  // Bright pink for active
+    blues: 'hsl(240, 100%, 60%)'   // Bright blue for active
+};
+
+function getCircleColor(index) {
+    const groupIndex = Math.floor(index / 4);
+    const colorIndex = index % 4;
+    const groups = ['reds', 'greens', 'pinks', 'blues'];
+    const group = groups[groupIndex];
+    return COLOR_GROUPS[group][colorIndex];
+}
+
+function getActiveColor(index) {
+    const groupIndex = Math.floor(index / 4);
+    const groups = ['reds', 'greens', 'pinks', 'blues'];
+    const group = groups[groupIndex];
+    return ACTIVE_COLORS[group];
+}
+
 // State
 const state = {
     isPlaying: false,
@@ -435,12 +502,12 @@ function activateNext() {
     });
 
     // Update circle display
-    dom.circles.forEach(circle => {
-        circle.style.backgroundColor = '#333';
+    dom.circles.forEach((circle, index) => {
+        circle.style.backgroundColor = getCircleColor(index);
         circle.classList.remove('beat');
     });
     
-    dom.circles[state.currentIndex].style.backgroundColor = '#ffb5c7';
+    dom.circles[state.currentIndex].style.backgroundColor = getActiveColor(state.currentIndex);
     if (state.currentIndex % 4 === 0) {
         dom.circles[state.currentIndex].classList.add('beat');
     }
@@ -492,7 +559,7 @@ dom.toggleButton.addEventListener('click', async () => {
     } else {
         clearInterval(state.intervalId);
         dom.toggleButton.textContent = 'Start';
-        dom.circles.forEach(circle => circle.style.backgroundColor = '#333');
+        dom.circles.forEach((circle, index) => circle.style.backgroundColor = getCircleColor(index));
         state.currentIndex = 0;
     }
 });
@@ -508,4 +575,7 @@ Object.keys(NOTE_TYPES).forEach(type => {
     fb.display.addEventListener('change', updateDisplays);
 });
 
-// Initialize
+// Initialize circle colors on page load
+dom.circles.forEach((circle, index) => {
+    circle.style.backgroundColor = getCircleColor(index);
+});

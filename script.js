@@ -70,10 +70,12 @@ class AudioEngine {
     // Inside your animation or timing loop (e.g., playNote or nextTick)
     playNote(type) {
         // 1. Check if this specific note type is supposed to be shown/played
-        if (!this.settings[`show${type}`]) { 
-            return; // Exit the function so no sound is created
-        }
+        const showKey = `show${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
+        if (!this[showKey]) { 
+            return; 
+        }
+        
         // 2. If it is shown, play the sound
         const sound = this.sounds[type];
         this.triggerTone(sound); 

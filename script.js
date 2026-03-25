@@ -27,9 +27,9 @@ class AudioEngine {
 
         // Create different sounds for each note type
         this.sounds = {
-            whole: this.createTone(220, 'sine', 0.3),      // Low A (220Hz)
-            quarter: this.createTone(430, 'square', 0.2),   // High E (330Hz)
-            half: this.createTone(640, 'triangle', 0.25)    // A above middle C (440Hz)
+            whole: this.createTone(220, 'triangle', 0.3),   // Low A
+            quarter: this.createTone(330, 'triangle', 0.2), // E (Perfect 5th above A)
+            half: this.createTone(440, 'triangle', 0.25)   // High A (Octave above A)
         };
     }
 

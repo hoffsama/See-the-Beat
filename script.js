@@ -193,8 +193,7 @@ function activateNext() {
         circle.style.backgroundColor = '#333';
         circle.classList.remove('beat');
     });
-    const section = Math.floor(currentIndex / 4);
-    circles[currentIndex].style.backgroundColor = colors[section];
+    circles[currentIndex].style.backgroundColor = '#33ccff'; // fixed active note color (not note-type dependent)
     if (currentIndex % 4 === 0) {
         circles[currentIndex].classList.add('beat');
     }

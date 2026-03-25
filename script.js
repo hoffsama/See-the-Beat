@@ -140,45 +140,50 @@ function showStats() {
 function activateNext() {
     const now = Date.now();
 
-    // If previous note was never pressed, mark miss; otherwise clear previous state
-    if (noteAwaiting) {
-        const missDiff = now - noteTriggerTime;
-        updateFeedback('note', missDiff, noteDiff, noteBar, true);
+    // Quarter note (every step): if it was pending, mark miss
+    if (quarterAwaiting) {
+        const missDiff = now - quarterTriggerTime;
+        updateFeedback('quarter', missDiff, quarterDiff, quarterBar, true);
     } else {
-        clearFeedback(noteDiff, noteBar);
+        clearFeedback(quarterDiff, quarterBar);
     }
-    noteAwaiting = false;
 
-    if (currentIndex % 4 === 0 || currentIndex === 0) {
-        if (quarterAwaiting) {
-            const missDiff = now - quarterTriggerTime;
-            updateFeedback('quarter', missDiff, quarterDiff, quarterBar, true);
+    // Whole note (every 4 steps)
+    if (currentIndex % 4 === 0) {
+        if (noteAwaiting) {
+            const missDiff = now - noteTriggerTime;
+            updateFeedback('note', missDiff, noteDiff, noteBar, true);
         } else {
-            clearFeedback(quarterDiff, quarterBar);
+            clearFeedback(noteDiff, noteBar);
         }
-        quarterAwaiting = false;
     }
 
-    if (currentIndex % 8 === 0 || currentIndex === 0) {
+    // Half note (every 8 steps)
+    if (currentIndex % 8 === 0) {
         if (halfAwaiting) {
             const missDiff = now - halfTriggerTime;
             updateFeedback('half', missDiff, halfDiff, halfBar, true);
         } else {
             clearFeedback(halfDiff, halfBar);
         }
-        halfAwaiting = false;
     }
 
     // Start current note cycle
-    noteAwaiting = true;
-    noteTriggerTime = now;
+    quarterAwaiting = true;
+    quarterTriggerTime = now;
+
     if (currentIndex % 4 === 0) {
-        quarterAwaiting = true;
-        quarterTriggerTime = now;
+        noteAwaiting = true;
+        noteTriggerTime = now;
+    } else {
+        noteAwaiting = false;
     }
+
     if (currentIndex % 8 === 0) {
         halfAwaiting = true;
         halfTriggerTime = now;
+    } else {
+        halfAwaiting = false;
     }
 
     lastNoteTime = now;
@@ -233,15 +238,15 @@ document.addEventListener('keydown', (e) => {
         const bpm = parseInt(bpmSlider.value);
         const interval = 60000 / bpm / 4;
 
-        if (showNote.checked && noteAwaiting) {
-            const noteDiffVal = now - noteTriggerTime;
-            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
-            noteAwaiting = false;
-        }
         if (showQuarter.checked && quarterAwaiting) {
             const quarterDiffVal = now - quarterTriggerTime;
             updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
             quarterAwaiting = false;
+        }
+        if (showNote.checked && noteAwaiting) {
+            const noteDiffVal = now - noteTriggerTime;
+            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
+            noteAwaiting = false;
         }
         if (showHalf.checked && halfAwaiting) {
             const halfDiffVal = now - halfTriggerTime;

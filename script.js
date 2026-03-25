@@ -11,6 +11,15 @@ let noteTriggerTime = 0;
 let quarterTriggerTime = 0;
 let halfTriggerTime = 0;
 
+let trackingActive = true;
+let notesHistory = [];
+let quartersHistory = [];
+let halvesHistory = [];
+let statsTimerId = null;
+const statsButton = document.getElementById('statsButton');
+const statsTimer = document.getElementById('statsTimer');
+const statsText = document.getElementById('statsText');
+
 const circles = document.querySelectorAll('.circle');
 const toggleButton = document.getElementById('toggleButton');
 const bpmSlider = document.getElementById('bpmSlider');
@@ -79,8 +88,53 @@ function updateError() {
     errorValue.textContent = errorBound.value;
 }
 
-function updateColorBound() {
-    colorValue.textContent = colorBound.value;
+function recordStat(type, diff, miss) {
+    if (!trackingActive) return;
+    const entry = {diff, miss, time: Date.now()};
+    if (type === 'note') {
+        notesHistory.push(entry);
+        if (notesHistory.length > 100) notesHistory.shift();
+    } else if (type === 'quarter') {
+        quartersHistory.push(entry);
+        if (quartersHistory.length > 100) quartersHistory.shift();
+    } else if (type === 'half') {
+        halvesHistory.push(entry);
+        if (halvesHistory.length > 100) halvesHistory.shift();
+    }
+}
+
+function formatStats(history) {
+    if (history.length === 0) return 'none';
+    const abs = history.map(item => Math.abs(item.diff));
+    const avg = abs.reduce((sum, val) => sum + val, 0) / abs.length;
+    const missCount = history.filter(item => item.miss).length;
+    return `count ${history.length}, avg ${avg.toFixed(1)}ms, miss ${missCount}`;
+}
+
+function showStats() {
+    const noteStats = formatStats(notesHistory);
+    const quarterStats = formatStats(quartersHistory);
+    const halfStats = formatStats(halvesHistory);
+    statsText.textContent = `Note: ${noteStats}; Quarter: ${quarterStats}; Half: ${halfStats}`;
+    trackingActive = false;
+    let countdown = 5;
+    statsTimer.style.display = 'inline';
+    statsTimer.textContent = `Resume in ${countdown}s`;
+
+    statsTimerId = setInterval(() => {
+        countdown -= 1;
+        if (countdown <= 0) {
+            clearInterval(statsTimerId);
+            trackingActive = true;
+            notesHistory = [];
+            quartersHistory = [];
+            halvesHistory = [];
+            statsTimer.textContent = 'Tracking';
+            setTimeout(() => { statsTimer.style.display = 'none'; }, 1000);
+        } else {
+            statsTimer.textContent = `Resume in ${countdown}s`;
+        }
+    }, 1000);
 }
 
 function activateNext() {
@@ -89,7 +143,7 @@ function activateNext() {
     // If previous note was never pressed, mark miss; otherwise clear previous state
     if (noteAwaiting) {
         const missDiff = now - noteTriggerTime;
-        updateFeedback(missDiff, noteDiff, noteBar);
+        updateFeedback('note', missDiff, noteDiff, noteBar);
     } else {
         clearFeedback(noteDiff, noteBar);
     }
@@ -98,7 +152,7 @@ function activateNext() {
     if (currentIndex % 4 === 0 || currentIndex === 0) {
         if (quarterAwaiting) {
             const missDiff = now - quarterTriggerTime;
-            updateFeedback(missDiff, quarterDiff, quarterBar);
+            updateFeedback('quarter', missDiff, quarterDiff, quarterBar);
         } else {
             clearFeedback(quarterDiff, quarterBar);
         }
@@ -108,7 +162,7 @@ function activateNext() {
     if (currentIndex % 8 === 0 || currentIndex === 0) {
         if (halfAwaiting) {
             const missDiff = now - halfTriggerTime;
-            updateFeedback(missDiff, halfDiff, halfBar);
+            updateFeedback('half', missDiff, halfDiff, halfBar);
         } else {
             clearFeedback(halfDiff, halfBar);
         }
@@ -152,7 +206,7 @@ function clearFeedback(diffSpan, bar) {
     bar.style.backgroundColor = 'gray';
 }
 
-function updateFeedback(diff, diffSpan, bar) {
+function updateFeedback(type, diff, diffSpan, bar) {
     const hitBound = parseInt(errorBound.value);
     const colorBoundVal = parseInt(colorBound.value);
     const sign = diff < 0 ? 'early' : diff > 0 ? 'late' : 'on time';
@@ -163,12 +217,14 @@ function updateFeedback(diff, diffSpan, bar) {
 
     if (miss) {
         bar.style.backgroundColor = 'red';
+        recordStat(type, diff, miss);
         return;
     }
 
     const normalized = Math.min(Math.abs(diff), colorBoundVal) / colorBoundVal;
     const hue = 120 * (1 - normalized); // 0=green, 120=red as diff increases
     bar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+    recordStat(type, diff, miss);
 }
 
 document.addEventListener('keydown', (e) => {
@@ -180,17 +236,17 @@ document.addEventListener('keydown', (e) => {
 
         if (showNote.checked && noteAwaiting) {
             const noteDiffVal = now - noteTriggerTime;
-            updateFeedback(noteDiffVal, noteDiff, noteBar);
+            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
             noteAwaiting = false;
         }
         if (showQuarter.checked && quarterAwaiting) {
             const quarterDiffVal = now - quarterTriggerTime;
-            updateFeedback(quarterDiffVal, quarterDiff, quarterBar);
+            updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
             quarterAwaiting = false;
         }
         if (showHalf.checked && halfAwaiting) {
             const halfDiffVal = now - halfTriggerTime;
-            updateFeedback(halfDiffVal, halfDiff, halfBar);
+            updateFeedback('half', halfDiffVal, halfDiff, halfBar);
             halfAwaiting = false;
         }
 
@@ -200,7 +256,7 @@ document.addEventListener('keydown', (e) => {
             const noteOffset = Math.round(diff / interval);
             const closestNoteTime = lastNoteTime + noteOffset * interval;
             const noteDiffVal = now - closestNoteTime;
-            updateFeedback(noteDiffVal, noteDiff, noteBar);
+            updateFeedback('note', noteDiffVal, noteDiff, noteBar);
         }
 
         if (showQuarter.checked) {
@@ -211,7 +267,7 @@ document.addEventListener('keydown', (e) => {
             const diffNextQ = Math.abs(now - nextQuarterTime);
             const diffPrevQ = Math.abs(now - prevQuarterTime);
             const quarterDiffVal = diffNextQ < diffPrevQ ? now - nextQuarterTime : now - prevQuarterTime;
-            updateFeedback(quarterDiffVal, quarterDiff, quarterBar);
+            updateFeedback('quarter', quarterDiffVal, quarterDiff, quarterBar);
         }
 
         if (showHalf.checked) {
@@ -222,7 +278,7 @@ document.addEventListener('keydown', (e) => {
             const diffNextH = Math.abs(now - nextHalfTime);
             const diffPrevH = Math.abs(now - prevHalfTime);
             const halfDiffVal = diffNextH < diffPrevH ? now - nextHalfTime : now - prevHalfTime;
-            updateFeedback(halfDiffVal, halfDiff, halfBar);
+            updateFeedback('half', halfDiffVal, halfDiff, halfBar);
         }
     }
 });
@@ -243,6 +299,7 @@ toggleButton.addEventListener('click', () => {
 bpmSlider.addEventListener('input', updateBPM);
 errorBound.addEventListener('input', updateError);
 colorBound.addEventListener('input', updateColorBound);
+statsButton.addEventListener('click', showStats);
 showNote.addEventListener('change', updateDisplays);
 noteDisplay.addEventListener('change', updateDisplays);
 showQuarter.addEventListener('change', updateDisplays);

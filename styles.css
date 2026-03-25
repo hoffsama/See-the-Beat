@@ -92,6 +92,18 @@
     font-size: 12px;
 }
 
+#statsPanel {
+    text-align: center;
+    margin: 10px auto;
+    width: 280px;
+}
+
+#statsText {
+    background: rgba(0,0,0,0.6);
+    border-radius: 4px;
+    padding: 6px;
+    min-height: 38px;
+}
 
 .circle:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-120px) rotate(0deg); }
 .circle:nth-child(2) { transform: translate(-50%, -50%) rotate(22.5deg) translateY(-120px) rotate(-22.5deg); }

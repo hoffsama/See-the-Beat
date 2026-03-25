@@ -96,36 +96,36 @@ const CALIBRATION_OFFSET = 18;
 
 const COLOR_GROUPS = {
     reds: [
-        'hsl(0, 70%, 25%)',   // Dark red
-        'hsl(0, 75%, 30%)',   // Red
-        'hsl(0, 80%, 35%)',   // Lighter red
-        'hsl(0, 85%, 40%)'    // Bright red
+        'hsl(0, 70%, 35%)',   // Normal red
+        'hsl(0, 90%, 20%)',   // Drastic dark red
+        'hsl(0, 70%, 35%)',   // Normal red
+        'hsl(0, 90%, 20%)'    // Drastic dark red
     ],
     greens: [
-        'hsl(120, 70%, 25%)', // Dark green
-        'hsl(120, 75%, 30%)', // Green
-        'hsl(120, 80%, 35%)', // Lighter green
-        'hsl(120, 85%, 40%)'  // Bright green
+        'hsl(120, 70%, 35%)', // Normal green
+        'hsl(120, 90%, 20%)', // Drastic dark green
+        'hsl(120, 70%, 35%)', // Normal green
+        'hsl(120, 90%, 20%)'  // Drastic dark green
     ],
     pinks: [
-        'hsl(300, 70%, 25%)', // Dark pink/magenta
-        'hsl(300, 75%, 30%)', // Pink
-        'hsl(300, 80%, 35%)', // Lighter pink
-        'hsl(300, 85%, 40%)'  // Bright pink
+        'hsl(300, 70%, 35%)', // Normal pink
+        'hsl(300, 90%, 20%)', // Drastic dark pink
+        'hsl(300, 70%, 35%)', // Normal pink
+        'hsl(300, 90%, 20%)'  // Drastic dark pink
     ],
     blues: [
-        'hsl(240, 70%, 25%)', // Dark blue
-        'hsl(240, 75%, 30%)', // Blue
-        'hsl(240, 80%, 35%)', // Lighter blue
-        'hsl(240, 85%, 40%)'  // Bright blue
+        'hsl(240, 70%, 35%)', // Normal blue
+        'hsl(240, 90%, 20%)', // Drastic dark blue
+        'hsl(240, 70%, 35%)', // Normal blue
+        'hsl(240, 90%, 20%)'  // Drastic dark blue
     ]
 };
 
 const ACTIVE_COLORS = {
-    reds: 'hsl(0, 100%, 60%)',    // Bright red for active
-    greens: 'hsl(120, 100%, 60%)', // Bright green for active
-    pinks: 'hsl(300, 100%, 60%)',  // Bright pink for active
-    blues: 'hsl(240, 100%, 60%)'   // Bright blue for active
+    reds: 'hsl(0, 100%, 50%)',    // Bright active red
+    greens: 'hsl(120, 100%, 50%)', // Bright active green
+    pinks: 'hsl(300, 100%, 50%)',  // Bright active pink
+    blues: 'hsl(240, 100%, 50%)'   // Bright active blue
 };
 
 function getCircleColor(index) {

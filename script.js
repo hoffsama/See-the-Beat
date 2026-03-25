@@ -139,6 +139,9 @@ function updateFeedback(type, diff, forceMiss = false) {
     const diffMs = `${Math.round(diff)}ms`;
 
     fb.diffText.textContent = `${diffMs} (${absSec}s ${sign})${miss ? ' - Miss' : ''}`;
+    
+    // Debug logging for timing analysis
+    console.log(`[${type}] trigger=${state.notes[type].triggerTime} | now=${Date.now()} | diff=${diff}ms | miss=${miss}`);
 
     if (miss) {
         fb.bar.style.backgroundColor = 'red';
@@ -213,6 +216,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && state.isPlaying) {
         e.preventDefault();
         const now = Date.now();
+        console.log(`--- SPACEBAR PRESSED at ${now} ---`);
 
         Object.keys(NOTE_TYPES).forEach(type => {
             const fb = dom.feedback[type];
@@ -220,8 +224,11 @@ document.addEventListener('keydown', (e) => {
             
             if (fb.checkbox.checked && note.awaiting) {
                 const diffVal = now - note.triggerTime;
+                console.log(`[${type}] awaiting=true | trigger was ${note.triggerTime} | diff=${diffVal}ms`);
                 updateFeedback(type, diffVal);
                 note.awaiting = false;
+            } else if (fb.checkbox.checked) {
+                console.log(`[${type}] awaiting=false (skipped)`);
             }
         });
     }

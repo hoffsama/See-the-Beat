@@ -51,3 +51,19 @@ div {
     text-align: center;
     margin: 20px;
 }
+
+#feedback {
+    margin-top: 20px;
+}
+
+#feedback > div {
+    margin: 10px 0;
+}
+
+#noteBar, #quarterBar, #halfBar {
+    width: 200px;
+    height: 20px;
+    margin: 5px auto;
+    border: 1px solid #000;
+    background: linear-gradient(to right, red, green);
+}
